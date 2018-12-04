@@ -1,3 +1,5 @@
+rm(list=ls())
+
 ## Load package
 library(igraph)
 # http://igraph.org/r/doc/
