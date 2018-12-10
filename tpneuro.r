@@ -25,16 +25,16 @@ N2 <- as.matrix(N2)
 N3 <- as.matrix(N3)
 W <- as.matrix(W)
 
-# colnames(N1) <- aalnames 
+colnames(N1) <- aalnames 
 # colnames(N2) <- aalnames 
 # colnames(N3) <- aalnames 
 # colnames(W) <- aalnames 
 # 
-# rownames(N1) <- aalnames 
+rownames(N1) <- aalnames 
 # rownames(N2) <- aalnames 
 # rownames(N3) <- aalnames 
 # rownames(W) <- aalnames 
-
+N1
 ## Cij
 corrplot(N1, is.corr=TRUE, title = "N1")#, order="hclust")
 
