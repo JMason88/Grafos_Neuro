@@ -27,8 +27,10 @@ data_reader <- function(x="N1") {
     
   }
   
-  pepe <- sujetos$N1_suj1.csv + sujetos$N1_suj10.csv  
+  promedio <- Reduce('+', sujetos)/length(sujetos)
   
+  
+  return(promedio)
 }
 
 
