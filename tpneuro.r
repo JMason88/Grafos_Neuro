@@ -10,13 +10,13 @@ library(corrplot)
 # http://kateto.net/network-visualization
 
 rm(list=ls())
-setwd("/home/juank/Dropbox/00_docencia/2017_DataMining/tpneuro/r")
+#setwd("/home/juank/Dropbox/00_docencia/2017_DataMining/tpneuro/r")
 
 N1 <- read.csv("N1promedio.csv",header=FALSE)
-#N2 <- read.csv("N2promedio.csv",header=FALSE)
-#N3 <- read.csv("N3promedio.csv",header=FALSE)
-#W <- read.csv("Wpromedio.csv",header=FALSE)
-aal <- read.csv("../aal.csv", header = F)
+N2 <- read.csv("./DataSujetos/N2promedio.csv",header=FALSE)
+N3 <- read.csv("/DataSujetos/N3promedio.csv",header=FALSE)
+W <- read.csv("Wpromedio.csv",header=FALSE)
+aal <- read.csv("./aal_extended.csv", header = F)
 aalnames <- aal[,2] 
 
 ##
@@ -120,3 +120,4 @@ ggplot(df, aes(dlist)) +                    # basic graphical object
   geom_line(aes(y=N1.mlist), colour="green")  + # second layer
   geom_line(aes(y=N2.mlist), colour="blue")  + # second layer
   geom_line(aes(y=N3.mlist), colour="red")  # second layer
+
