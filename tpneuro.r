@@ -9,32 +9,42 @@ library(corrplot)
 # https://github.com/cwatson/brainGraph
 # http://kateto.net/network-visualization
 
-rm(list=ls())
 #setwd("/home/juank/Dropbox/00_docencia/2017_DataMining/tpneuro/r")
 
-N1 <- read.csv("N1promedio.csv",header=FALSE)
-N2 <- read.csv("./DataSujetos/N2promedio.csv",header=FALSE)
-N3 <- read.csv("/DataSujetos/N3promedio.csv",header=FALSE)
-W <- read.csv("Wpromedio.csv",header=FALSE)
-aal <- read.csv("./aal_extended.csv", header = F)
-aalnames <- aal[,2] 
+source("07.r_scripts/data_reader.r")
+
+N1_promedio <- data_reader(x = "N1")
+N2_promedio <- data_reader(x = "N2")
+N3_promedio <- data_reader(x = "N3")
+W_promedio <- data_reader(x = "W_")
+
+#N1 <- read.csv("N1promedio.csv",header=FALSE)
+#N2 <- read.csv("./DataSujetos/N2promedio.csv",header=FALSE)
+#N3 <- read.csv("/DataSujetos/N3promedio.csv",header=FALSE)
+#W <- read.csv("Wpromedio.csv",header=FALSE)
+#aal <- read.csv("./aal_extended.csv", header = F)
+#aalnames <- aal[,2] 
 
 ##
-N1 <- as.matrix(N1)
-N2 <- as.matrix(N2)
-N3 <- as.matrix(N3)
-W <- as.matrix(W)
+#N1 <- as.matrix(N1)
+#N2 <- as.matrix(N2)
+#N3 <- as.matrix(N3)
+#W <- as.matrix(W)
 
-colnames(N1) <- aalnames 
+#colnames(N1) <- aalnames 
 # colnames(N2) <- aalnames 
 # colnames(N3) <- aalnames 
 # colnames(W) <- aalnames 
 # 
-rownames(N1) <- aalnames 
+#rownames(N1) <- aalnames 
 # rownames(N2) <- aalnames 
 # rownames(N3) <- aalnames 
 # rownames(W) <- aalnames 
-N1
+N1 <- N1_promedio
+N2 <- N2_promedio
+N3 <- N3_promedio
+W <- W_promedio
+
 ## Cij
 corrplot(N1, is.corr=TRUE, title = "N1")#, order="hclust")
 

@@ -4,8 +4,7 @@
 
 ###########################################################################
 
-source("./07.r_scripts/LibraryRequireInstaller.r")
-rm(list = ls())
+source("07.r_scripts/LibraryRequireInstaller.r")
 
 libraryRequireInstall("readr")
 
@@ -29,6 +28,10 @@ data_reader <- function(x="N1") {
   
   promedio <- Reduce('+', sujetos)/length(sujetos)
   
+  aalnames <- aal[,2]
+  
+  colnames(promedio) <- aalnames
+  rownames(promedio) <- aalnames
   
   return(promedio)
 }
