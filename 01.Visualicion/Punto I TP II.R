@@ -244,19 +244,58 @@ ggplot(melt(diameters, id.vars = "Delta"), aes (x=Delta,y=value,color=variable))
 ################### CENTRALIDAD ##################
 
 ################### GRADO ##################
+
+#Grado medio de la red
 mean.degree.N1<-netN1 %>% map(~ mean(degree(.x)))
 mean.degree.N2<-netN2 %>% map(~ mean(degree(.x)))
 mean.degree.N3<-netN3 %>% map(~ mean(degree(.x)))
 mean.degree.W<-netW %>% map(~ mean(degree(.x)))
 
-ç<-data.frame(deltas,unlist(mean.degree.N1), unlist(mean.degree.N2), unlist(mean.degree.N3), unlist(mean.degree.W))
+mean.degrees<-data.frame(deltas,unlist(mean.degree.N1), unlist(mean.degree.N2), unlist(mean.degree.N3), unlist(mean.degree.W))
 colnames(mean.degrees)<-c("Delta", "N1", "N2", "N3", "W")
 
 ggplot(melt(mean.degrees, id.vars = "Delta"), aes (x=Delta,y=value,color=variable))+
   geom_point(size=0.2, shape=21)+
   geom_line()+
-  ggtitle("Grado promedio en funcion de δ") +
-  xlab("δ densidad de aristas") + ylab("Grado promedio")
+  ggtitle("Grado medio de la red en funcion de δ") +
+  xlab("δ densidad de aristas") + ylab("Grado medio")
+
+#Distribucion de grados
+dist.degree.N1<-netN1 %>% map(~ degree.distribution(.x, cumulative = TRUE))
+dist.degree.N2<-netN2 %>% map(~ degree.distribution(.x, cumulative = TRUE))
+dist.degree.N3<-netN3 %>% map(~ degree.distribution(.x, cumulative = TRUE))
+dist.degree.W<-netW %>% map(~ degree.distribution(.x, cumulative = TRUE))
+
+dist.degrees<-data.frame(deltas,unlist(mean.degree.N1), unlist(mean.degree.N2), unlist(mean.degree.N3), unlist(mean.degree.W))
+colnames(mean.degrees)<-c("Delta", "N1", "N2", "N3", "W")
+
+ggplot(melt(mean.degrees, id.vars = "Delta"), aes (x=Delta,y=value,color=variable))+
+  geom_point(size=0.2, shape=21)+
+  geom_line()+
+  ggtitle("Grado medio de la red en funcion de δ") +
+  xlab("δ densidad de aristas") + ylab("Grado medio")
+
+
+
+dd<-degree.distribution(netN1[[1]], cumulative = TRUE)
+dd<-degree.distribution(netN1[[1]], cumulative = FALSE)
+
+probability = dd[-1] 
+nonzero.position= which(probability != 0)
+
+probability = probability[nonzero.position]
+
+d = degree(netN1[[1]], mode = "all")
+degree = 1:max(d)
+
+degree = degree[nonzero.position]
+
+reg= lm(log(probability) ~ log(degree))
+
+summary(reg)$r.square
+
+cozf=coef(reg)
+
 
 
 
