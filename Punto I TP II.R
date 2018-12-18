@@ -6,6 +6,9 @@ library(tidyverse)
 library(readxl)
 library(qgraph)
 library(reshape)
+library(GGally)
+library(ggcorrplot)
+library(ggpubr)
 
 setwd("/Volumes/Macintosh HD/Users/Mario/Dropbox/Maestria Data Minin/DM CyT/TP2/DataSujetos+AAL/DataSujetos")
 setwd("E:/MARIO/Dropbox/Maestria Data Minin/DM CyT/TP2/DataSujetos+AAL/DataSujetos")
@@ -49,9 +52,9 @@ rownames(W) <- aalnames
 
 ## Cij
 corrplot(N1, is.corr=TRUE, title = "N1", order="hclust", cl.cex=1, tl.cex=0.4)
-corrplot(N2, is.corr=TRUE, title = "N2", order="hclust", cl.cex=1, tl.cex=0.4)#, order="hclust")
-corrplot(N3, is.corr=TRUE, title = "N3", order="hclust", cl.cex=1, tl.cex=0.4)#, order="hclust")
-corrplot(W, is.corr=TRUE, title = "W", order="hclust", cl.cex=1, tl.cex=0.4)#, order="hclust")
+corrplot(N2, is.corr=TRUE, title = "N2", order="hclust", cl.cex=1, tl.cex=0.4)
+corrplot(N3, is.corr=TRUE, title = "N3", order="hclust", cl.cex=1, tl.cex=0.4)
+corrplot(W, is.corr=TRUE, title = "W", order="hclust", cl.cex=1, tl.cex=0.4)
 
 
 #graficar pesados
@@ -106,9 +109,8 @@ plot.igraph(netW, main="Visualizacion de  la estructura de la red pesada W",
             vertex.label.family="Arial",vertex.label.font= 3,
             margin = -0.1,layout=lW, vertex.size = 10, vertex.label.cex = 0.6)
 
-## Umbral de correcion en funcino de la densidad de aristas
+## Umbral de correcion en funcion de la densidad de aristas
 
-#N1
 diag(N1)<-0
 diag(N2)<-0
 diag(N3)<-0
@@ -145,30 +147,48 @@ ggplot(melt(out, id.vars = "Delta"), aes (x=Delta,y=value,color=variable))+
 
 ##########GENERACION DE GRAFOS NO PESADOS CON DISTINTOS VALORES DE DENSIDAD DE ARISTAS#######
 
-N= dim(N1)[1]
-Nmaxlinks = N*(N-1)
-n = 1000
-delta = n/Nmaxlinks
-print(delta)
-
+###Creo matrices no pesadas para un intervalo de densidad de arista 0.025 0.15 incrementos de 0.005
 deltas<-seq(from=0.025, to=0.15, by=0.005)
 ns<-deltas*Nmaxlinks
+
 ros.N1 <- tmp1[ns]
-N1b = (N1>0.815)
+ros.N2 <- tmp2[ns]
+ros.N3 <- tmp3[ns]
+ros.W <- tmpW[ns]
 
 N1b <- data.frame(V1=logical(116))
+N2b <- data.frame(V1=logical(116))
+N3b <- data.frame(V1=logical(116))
+Wb <- data.frame(V1=logical(116))
 
 for (i in 1:length(ros.N1)){ 
   N1b[i] = N1>ros.N1[i]
 }
+for (i in 1:length(ros.N2)){ 
+  N2b[i] = N2>ros.N2[i]
+}
+for (i in 1:length(ros.N3)){ 
+  N3b[i] = N3>ros.N3[i]
+}
+for (i in 1:length(ros.W)){ 
+  Wb[i] = W>ros.W[i]
+}
 
-for (i in 1:60) tmp[i] <- matrix(FALSE, nrow=4, ncol=4)
+netN1<-N1b %>% map(~ graph.adjacency(.x,mode="undirected",diag = FALSE))
+netN2<-N2b %>% map(~ graph.adjacency(.x,mode="undirected",diag = FALSE))
+netN3<-N3b %>% map(~ graph.adjacency(.x,mode="undirected",diag = FALSE))
+netW<-Wb %>% map(~ graph.adjacency(.x,mode="undirected",diag = FALSE))
 
-corrplot(N1b, is.corr=TRUE, title = "N1 thresholded", outline=FALSE)#, order="hclust")
+plotsN1b<-N1b %>% map(~ ggcorrplot(.x, type = "upper", title = "N1 thresholded", hc.order=TRUE, show.diag=FALSE, tl.cex=5, tl.col="black", colors = brewer.pal(n = 3, name = "RdGy")))
+plotsN2b<-N2b %>% map(~ ggcorrplot(.x, type = "upper", title = "N2 thresholded", hc.order=TRUE, show.diag=FALSE, tl.cex=5, tl.col="black", colors = brewer.pal(n = 3, name = "RdGy")))
+plotsN3b<-N3b %>% map(~ ggcorrplot(.x, type = "upper", title = "N3 thresholded", hc.order=TRUE, show.diag=FALSE, tl.cex=5, tl.col="black", colors = brewer.pal(n = 3, name = "RdGy")))
+plotsWb<-Wb %>% map(~ ggcorrplot(.x, type = "upper", title = "W thresholded", hc.order=TRUE, show.diag=FALSE, tl.cex=5, tl.col="black", colors = brewer.pal(n = 3, name = "RdGy")))
 
-netN1 <- graph.adjacency(N1b,mode="undirected",diag = FALSE)
-V(netN1)$media <- aalnames
-plot(netN1)
+ggarrange(plotlist=plotsN1b)
+ggarrange(plotlist=plotsN2b)
+ggarrange(plotlist=plotsN3b)
+ggarrange(plotlist=plotsWb)
+
 
 
 ################### CENTRALIDAD ##################
