@@ -16,7 +16,8 @@ jk.modularity <- function(M, n, method) {
   
   
   mout = modularity(netM,netM.cl.eb$membership)
-  return(mout)	
+  N_communities = length(netM.cl.eb)
+  return(c(mout, N_communities))	
   
   }
   

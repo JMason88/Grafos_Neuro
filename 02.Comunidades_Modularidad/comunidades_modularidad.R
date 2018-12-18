@@ -40,7 +40,10 @@ for (n in nlist) {
   N3.mlist[k] = jk.modularity(N3,n,"Louvain")
 }
 
+plot.communities(jk.modularity(W,n,"Louvain"))
+
 df <- data.frame(dlist,W.mlist,N1.mlist,N2.mlist,N3.mlist)
+
 
 
 ggplot(df, aes(dlist)) +                    # basic graphical object
