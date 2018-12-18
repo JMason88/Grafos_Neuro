@@ -189,11 +189,76 @@ ggarrange(plotlist=plotsN2b)
 ggarrange(plotlist=plotsN3b)
 ggarrange(plotlist=plotsWb)
 
+#### numero de nodos ####
+vcount.N1<-netN1 %>% map(~ vcount(.x))
+vcount.N2<-netN2 %>% map(~ vcount(.x))
+vcount.N3<-netN3 %>% map(~ vcount(.x))
+vcount.W<-netW %>% map(~ vcount(.x))
 
+#### numero de aristas ####
+ecount.N1<-netN1 %>% map(~ ecount(.x))
+ecount.N2<-netN2 %>% map(~ ecount(.x))
+ecount.N3<-netN3 %>% map(~ ecount(.x))
+ecount.W<-netW %>% map(~ ecount(.x))
+
+aristas<-data.frame(deltas,unlist(ecount.N1), unlist(ecount.N2), unlist(ecount.N3), unlist(ecount.W))
+colnames(aristas)<-c("Delta", "N1", "N2", "N3", "W")
+
+ggplot(aristas, aes (x=Delta,y=N1))+
+  geom_point(size=0.2, shape=21)+
+  ggtitle("Umbral de corte en funcion de la densidad de aristas") +
+  xlab("δ densidad de aristas") + ylab("numero de aristas")
+
+### es un grafo simple? ######
+simple.N1<-netN1 %>% map(~ is.simple(.x))
+simple.N2<-netN2 %>% map(~ is.simple(.x))
+simple.N3<-netN3 %>% map(~ is.simple(.x))
+simple.W<-netW %>% map(~ is.simple(.x))
+
+simples<-data.frame(deltas,unlist(simple.N1), unlist(simple.N2), unlist(simple.N3), unlist(simple.W))
+
+### es un grafo conexo? ####
+connect.N1<-netN1 %>% map(~ is.connected(.x))
+connect.N2<-netN2 %>% map(~ is.connected(.x))
+connect.N3<-netN3 %>% map(~ is.connected(.x))
+connect.W<-netW %>% map(~ is.connected(.x))
+
+connected<-data.frame(deltas,unlist(connect.N1), unlist(connect.N2), unlist(connect.N3), unlist(connect.W))
+colnames(connected)<-c("Delta", "N1", "N2", "N3", "W")
+
+# El diametro del componente conexo
+diameter.N1<-netN1 %>% map(~ diameter(.x))
+diameter.N2<-netN2 %>% map(~ diameter(.x))
+diameter.N3<-netN3 %>% map(~ diameter(.x))
+diameter.W<-netW %>% map(~ diameter(.x))
+
+diameters<-data.frame(deltas,unlist(diameter.N1), unlist(diameter.N2), unlist(diameter.N3), unlist(diameter.W))
+colnames(diameters)<-c("Delta", "N1", "N2", "N3", "W")
+
+ggplot(melt(diameters, id.vars = "Delta"), aes (x=Delta,y=value,color=variable))+
+  geom_point(size=0.2, shape=21)+
+  geom_line()+
+  ggtitle("Diametro del componente conexo en funcion de δ") +
+  xlab("δ densidad de aristas") + ylab("Diametro componente conexo")
 
 ################### CENTRALIDAD ##################
 
 ################### GRADO ##################
+mean.degree.N1<-netN1 %>% map(~ mean(degree(.x)))
+mean.degree.N2<-netN2 %>% map(~ mean(degree(.x)))
+mean.degree.N3<-netN3 %>% map(~ mean(degree(.x)))
+mean.degree.W<-netW %>% map(~ mean(degree(.x)))
+
+ç<-data.frame(deltas,unlist(mean.degree.N1), unlist(mean.degree.N2), unlist(mean.degree.N3), unlist(mean.degree.W))
+colnames(mean.degrees)<-c("Delta", "N1", "N2", "N3", "W")
+
+ggplot(melt(mean.degrees, id.vars = "Delta"), aes (x=Delta,y=value,color=variable))+
+  geom_point(size=0.2, shape=21)+
+  geom_line()+
+  ggtitle("Grado promedio en funcion de δ") +
+  xlab("δ densidad de aristas") + ylab("Grado promedio")
+
+
 
 ################### CAMINO MINIMO ##################
 
