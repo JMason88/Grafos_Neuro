@@ -21,6 +21,7 @@ include.packages <- function (pkg) {
 include.packages("brainGraph")
 include.packages("dplyr")
 include.packages("igraph")
+include.packages("readr")
 
 calcular_roles <- function (g, memb) {
   roles<-data.frame(z=within_module_deg_z_score(g,memb),
@@ -47,6 +48,10 @@ calcular_membresia <- function(M, n, method ="Louvain") {
   }
   
   if(method == "Louvain"){
+    netM.cl.eb <- cluster_louvain(netM)
+  }
+  
+  if(method == "Optimal"){
     netM.cl.eb <- cluster_louvain(netM)
   }
   
@@ -89,4 +94,24 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
                                       layout.pos.col = matchidx$col))
     }
   }
+}
+
+
+data_reader <- function(path,names,pattern) {
+  
+  sujetos<-NULL
+  i<-1
+  files<-list.files(path = path, full.names=T, pattern=pattern)
+  
+  for (f in files) {
+    m1<-read.csv(f,header = F)
+    sujetos[i]<-list(as.matrix(m1))
+    i<-i+1
+  }
+  
+  promedio <- Reduce('+', sujetos)/length(sujetos)
+  colnames(promedio) <- names
+  rownames(promedio) <- names
+  
+  return(promedio)
 }
