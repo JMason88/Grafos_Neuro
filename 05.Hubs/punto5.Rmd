@@ -1,0 +1,166 @@
+---
+title: "Tarea 5: Rol de nodos, y cambios en el rol de los nodos"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(knitr)
+library(rmarkdown)
+knitr::opts_chunk$set(echo = TRUE)
+#knitr::opts_knit$set(root.dir = "C:\\Users\\fernando.d.menendez\\Google Drive\\Maestria\\Ciencia\\TP2\\")
+library(igraph)
+library(ggplot2)
+library(brainGraph)
+library(dplyr)
+library(ggthemes)
+library(ggpubr)
+
+```
+```{r include=FALSE}
+rm(list = ls())
+gc()
+```
+
+```{r echo=FALSE}
+parts<-read.csv("..\\aal_extended.csv",
+             header = F)
+colnames(parts)<-c("nbr","name","cd","zone","side")
+parts$nbr<-NULL
+```
+
+
+```{r echo=FALSE}
+source("..\\07.r_scripts\\node_roles.R")
+```
+
+
+```{r echo=FALSE}
+read_subj_data<-function(path,names,pattern) {
+n1_lst<-NULL
+i<-1
+files<-list.files(path = path, full.names=T, pattern=pattern)
+
+for (f in files) {
+  m1<-read.csv(f,header = F)
+  colnames(m1)<-names
+  rownames(m1)<-names
+  n1_lst[[i]]<-as.matrix(m1)
+  i<-i+1
+}
+return(n1_lst)
+}
+```
+
+
+
+```{r}
+N1<-read_subj_data("..\\DataSujetos\\",parts$name,"N1")
+N2<-read_subj_data("..\\DataSujetos\\",parts$name,"N2")
+N3<-read_subj_data("..\\DataSujetos\\",parts$name,"N3")
+W<-read_subj_data("..\\DataSujetos\\",parts$name,"W")
+
+```
+
+
+
+```{r echo=FALSE}
+roles_por_muestra<-function(M,dens_vector) {
+  sal<-data.frame(rol=character(),n=numeric(),densidad=numeric())
+#  for (dens in seq(100,2000,100)) {
+  for (dens in dens_vector) {
+    for(suj in M) {
+      aux<-calcular_membresia(suj,dens)
+      roles<-calcular_roles(aux$grph,aux$membr)
+      res<-roles %>% group_by(rol) %>% tally() %>% mutate(densidad = dens)
+      sal<-rbind(sal,res) 
+    }
+  }
+  return(sal %>% group_by(densidad, rol) %>% summarise(nodes=round(mean(n, na.rm = T),0), 
+                                                       desv=ifelse(is.na(round(sd(n, na.rm = T),0)),
+                                                                   0,
+                                                                   round(sd(n, na.rm = T),0))))
+}
+```
+
+
+```{r echo=FALSE}
+roles_n1<-roles_por_muestra(N1,seq(100,2000,100)) %>% mutate(estado="N1")
+roles_n2<-roles_por_muestra(N2,seq(100,2000,100)) %>% mutate(estado="N2")
+roles_n3<-roles_por_muestra(N3,seq(100,2000,100)) %>% mutate(estado="N3")
+roles_w<-roles_por_muestra(W,seq(100,2000,100)) %>% mutate(estado="W")
+roles_n1w <- rbind(roles_n1,roles_w) %>% filter(!is.na(rol))
+roles_n2w <- rbind(roles_n2,roles_w) %>% filter(!is.na(rol))
+roles_n3w <- rbind(roles_n3,roles_w) %>% filter(!is.na(rol))
+```
+
+
+```{r echo=FALSE}
+p1<-ggplot(roles_n1w, aes(densidad, nodes,colour=estado)) +
+    geom_point() +
+    geom_line() +
+    geom_errorbar(aes(ymin = nodes - desv, ymax = nodes + desv)) +
+    labs(x = " ",
+         y = "Node Mean(SD)"
+         ) +
+    ggtitle("N1 vs Wake") +
+    facet_wrap(~rol, scales="free", nrow=4, ncol = 1) +
+    theme_tufte()
+p2<-ggplot(roles_n2w, aes(densidad, nodes, colour=estado)) +
+    geom_point() +
+    geom_line() +
+    geom_errorbar(aes(ymin = nodes - desv, ymax = nodes + desv)) +
+    labs(x = "Densidad",
+         y = "Node Mean(SD)"
+         ) +
+    ggtitle("N2 vs Wake") +
+    facet_wrap(~rol, scales="free", nrow=4, ncol = 1) +
+    theme_tufte() 
+#    theme(axis.title.x = element_blank()) 
+p3<-ggplot(roles_n3w, aes(densidad, nodes, colour=estado)) +
+    geom_point() +
+    geom_line() +
+    geom_errorbar(aes(ymin = nodes - desv, ymax = nodes + desv)) +
+    labs(
+      x = " ",
+      y = "Node Mean(SD)"
+    ) +
+    ggtitle("N3 vs Wake") +
+    facet_wrap(~rol, scales="free", nrow=4, ncol = 1) +
+    theme_tufte() 
+```
+
+
+
+```{r fig.width=9, fig.height=6, echo=FALSE}
+multiplot(p1,p2,p3, cols=3)
+```
+<div style="text-align: right">** Los intervalos de cada punto fueron calculados usando desvio estandar</div>
+
+```{r}
+interesting_value <- 500 
+int_n1<-roles_por_muestra(N1,interesting_value) %>% mutate(estado="N1")
+int_n2<-roles_por_muestra(N2,interesting_value) %>% mutate(estado="N2")
+int_n3<-roles_por_muestra(N3,interesting_value) %>% mutate(estado="N3")
+int_w<-roles_por_muestra(W,interesting_value) %>% mutate(estado="W")
+
+```
+
+```{r fig.width=9, fig.height=6, echo=FALSE}
+full_roles<-rbind(int_n2,int_n3,int_n1,int_w) %>% filter(!is.na(rol))
+ggplot(full_roles, aes(estado, nodes, fill=estado)) +
+    geom_bar(stat="identity") +
+    labs(
+      x = "Estados",
+      y = "Node Count"
+    ) +
+#    ggtitle("N3 vs Wake") +
+    facet_wrap(~rol, scales="free", nrow=2, ncol = 2) +
+    scale_fill_manual(values=c("red", "yellow", "blue", "black")) +
+    theme_tufte() 
+```
+
+
+
+
+
+
+

@@ -8,7 +8,7 @@ libraryRequireInstall('igraph')
 libraryRequireInstall('visNetwork')
 libraryRequireInstall('ggplot2')
 libraryRequireInstall('RColorBrewer')
-libraryRequireInstall(reshape2)
+libraryRequireInstall("reshape2")
 
 ####################### Data Loading #######################
 
