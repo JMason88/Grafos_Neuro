@@ -147,6 +147,7 @@ dd_comu %>%
   ggplot(., aes(x = dlist, y = value, group=variable, color=variable)) +
     geom_line(size=1.2) +  # first layer
     geom_point() +
+    geom_errorbar(aes(ymin=len-sd, ymax=len+sd), width=.2,position=position_dodge(0.05)) +
     scale_color_brewer(palette = "Dark2") +
     labs(title="Louvain - Cantidad de Comunidades",x="Densidad de Aristas(d)", y = "Cantidad de Comunidades (Nc)") +
     theme_classic() +
