@@ -3,16 +3,24 @@
 #                       Estadistica
 
 ###########################################################################
+rm(list=ls())
 
 source("07.r_scripts/LibraryRequireInstaller.r")
+source('jk.modularity.R')
 
 libraryRequireInstall("readr")
 libraryRequireInstall("dplyr")
 libraryRequireInstall("plyr")
+libraryRequireInstall("igraph")
+libraryRequireInstall("visNetwork")
+libraryRequireInstall("reshape2")
+libraryRequireInstall("tidyverse")
 
 
 
 aal <- read.csv('aal_extended.csv', header=F, sep = ',')
+aalnames <- aal[,2]
+
 
 files <- list.files('DataSujetos')
 
@@ -21,8 +29,11 @@ sujetos <- list()
 for(i in 1:length(files)) {
     
   sujetos[as.character(files[i])] <- list(as.matrix(read.csv(paste("./DataSujetos/",files[i], sep = ""), header = F)))
+  colnames(sujetos[[i]]) <- aalnames
+  rownames(sujetos[[i]]) <- aalnames
     
 }
+
 
 N1 <- list()
 N2 <- list()
@@ -87,37 +98,60 @@ N2.Qlist_SD = array(data=NA, dim=length(nlist))
 N3.Qlist_AVG = array(data=NA, dim=length(nlist))
 N3.Qlist_SD = array(data=NA, dim=length(nlist))
 
+
 k = 0
 for (n in nlist) {
   k = k+1
   dlist[k] = n/Nmaxlinks
-  W.mlist[k] = jk.modularity(W,n,"Louvain")[2]
-  N1.mlist[k] = jk.modularity(N1,n,"Louvain")[2]
-  N2.mlist[k] = jk.modularity(N2,n,"Louvain")[2]
-  N3.mlist[k] = jk.modularity(N3,n,"Louvain")[2]
+  W_temp <- c()
+  N1_temp <- c()
+  N2_temp <- c()
+  N3_temp <- c()
+  for(i in 1:18){
+    W_temp[i] = jk.modularity(as.matrix(W[[i]]),n,"Louvain")[2]
+    N1_temp[i] = jk.modularity(as.matrix(N1[[i]]),n,"Louvain")[2]
+    N2_temp[i] = jk.modularity(as.matrix(N2[[i]]),n,"Louvain")[2]
+    N3_temp[i] = jk.modularity(as.matrix(N3[[i]]),n,"Louvain")[2]
+  }
   
-  ##  Grafo Random
-  random_graph <- sample_gnm(116,n)
-  random_louvain <- cluster_louvain(random_graph)
-  Random.mlist[k] <- length(random_louvain)
+  W.Qlist_AVG[k] = mean(W_temp)
+  W.Qlist_SD[k] = sd(W_temp)
+  N1.Qlist_AVG[k] = mean(N1_temp)
+  N1.Qlist_SD[k] = sd(N1_temp)
+  N2.Qlist_AVG[k] = mean(N2_temp)
+  N2.Qlist_SD[k] = sd(N2_temp)
+  N3.Qlist_AVG[k] = mean(N3_temp)
+  N3.Qlist_SD[k] = sd(N3_temp)
+  
 }
 
 
-df_comu <- data.frame(dlist,W.mlist,N1.mlist,N2.mlist,N3.mlist,Random.mlist)
+df_comu <- data.frame(dlist,
+                      W.Qlist_AVG,
+                      W.Qlist_SD,
+                      N1.Qlist_AVG,
+                      N1.Qlist_SD,
+                      N2.Qlist_AVG,
+                      N2.Qlist_SD,
+                      N3.Qlist_AVG,
+                      N3.Qlist_SD
+                      )
 
-color <- brewer.pal(5, name = 'Dark2')
 
 ##Then rearrange your data frame
 
 dd_comu = melt(df_comu, id=c("dlist"))
 
-ggplot(dd_comu, aes(x = dlist, y = value, group=variable, color=variable)) +                    # basic graphical object
-  geom_line(size=1.2) +  # first layer
-  scale_color_brewer(palette = "Dark2") +
-  scale_linetype_manual(c("solid","solid","solid","solid","dashed")) +
-  labs(title="Louvain - Cantidad de Comunidades",x="Densidad de Aristas(d)", y = "Cantidad de Comunidades (Nc)") +
-  theme_classic() +
-  theme(legend.position="bottom")
+dd_comu %>%
+  filter(variable == c('W.Qlist_AVG','W.Qlist_SD','N1.Qlist_AVG','N1.Qlist_SD')) %>%
+  ggplot(., aes(x = dlist, y = value, group=variable, color=variable)) +
+    geom_line(size=1.2) +  # first layer
+    geom_point() +
+    geom_errorbar(aes(ymin=len-sd, ymax=len+sd), width=.2,position=position_dodge(0.05)) +
+    scale_color_brewer(palette = "Dark2") +
+    labs(title="Louvain - Cantidad de Comunidades",x="Densidad de Aristas(d)", y = "Cantidad de Comunidades (Nc)") +
+    theme_classic() +
+    theme(legend.position="bottom")
 
 
 
