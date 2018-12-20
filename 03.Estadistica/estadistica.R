@@ -14,6 +14,7 @@ libraryRequireInstall("plyr")
 libraryRequireInstall("igraph")
 libraryRequireInstall("visNetwork")
 libraryRequireInstall("reshape2")
+libraryRequireInstall("tidyverse")
 
 
 
@@ -141,13 +142,15 @@ df_comu <- data.frame(dlist,
 
 dd_comu = melt(df_comu, id=c("dlist"))
 
-ggplot(dd_comu, aes(x = dlist, y = value, group=variable, color=variable)) +                    # basic graphical object
-  geom_line(size=1.2) +  # first layer
-  scale_color_brewer(palette = "Dark2") +
-  scale_linetype_manual(c("solid","solid","solid","solid","dashed")) +
-  labs(title="Louvain - Cantidad de Comunidades",x="Densidad de Aristas(d)", y = "Cantidad de Comunidades (Nc)") +
-  theme_classic() +
-  theme(legend.position="bottom")
+dd_comu %>%
+  filter(variable == c('W.Qlist_AVG','W.Qlist_SD','N1.Qlist_AVG','N1.Qlist_SD')) %>%
+  ggplot(., aes(x = dlist, y = value, group=variable, color=variable)) +
+    geom_line(size=1.2) +  # first layer
+    geom_point() +
+    scale_color_brewer(palette = "Dark2") +
+    labs(title="Louvain - Cantidad de Comunidades",x="Densidad de Aristas(d)", y = "Cantidad de Comunidades (Nc)") +
+    theme_classic() +
+    theme(legend.position="bottom")
 
 
 
