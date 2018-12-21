@@ -82,6 +82,8 @@ N3.mlist = array(data=NA, dim=length(nlist))
 Random.mlist = array(data=NA, dim = length(nlist))
 
 k = 0
+start_time <- Sys.time()
+
 for (n in nlist) {
   k = k+1
   dlist[k] = n/Nmaxlinks
@@ -95,6 +97,8 @@ for (n in nlist) {
   random_louvain <- cluster_louvain(random_graph)
   Random.mlist[k] <- modularity(random_graph, random_louvain$membership)
 }
+end_time <- Sys.time()
+end_time-start_time
 
 
 df <- data.frame(dlist,W.mlist,N1.mlist,N2.mlist,N3.mlist,Random.mlist)
@@ -127,6 +131,7 @@ N3.mlist = array(data=NA, dim=length(nlist))
 Random.mlist = array(data=NA, dim = length(nlist))
 
 k = 0
+start_time <- Sys.time()
 for (n in nlist) {
   k = k+1
   dlist[k] = n/Nmaxlinks
@@ -141,6 +146,8 @@ for (n in nlist) {
   Random.mlist[k] <- length(random_louvain)
 }
 
+end_time <- Sys.time()
+end_time-start_time
 
 df_comu <- data.frame(dlist,W.mlist,N1.mlist,N2.mlist,N3.mlist,Random.mlist)
 
@@ -204,3 +211,4 @@ ggplot(dd, aes(x = dlist, y = value, group=variable, color=variable)) +         
   labs(title="Girvan-Newman - Coeficiente de Modularidad",x="Densidad de Aristas(d)", y = "Coeficiente de Modularidad (Q)") +
   theme_classic() +
   theme(legend.position="bottom")
+
