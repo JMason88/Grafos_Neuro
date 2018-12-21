@@ -1,6 +1,8 @@
 ---
-title: "Tarea 5: Rol de nodos, y cambios en el rol de los nodos"
-output: html_document
+title: 'Tarea 5: Rol de nodos, y cambios en el rol de los nodos'
+output:
+  word_document: default
+  html_document: default
 ---
 ```{r setup, include=FALSE}
 library(knitr)
