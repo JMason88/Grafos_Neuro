@@ -15,6 +15,9 @@ libraryRequireInstall("igraph")
 libraryRequireInstall("visNetwork")
 libraryRequireInstall("reshape2")
 libraryRequireInstall("tidyverse")
+libraryRequireInstall("DT")
+libraryRequireInstall("formattable")
+
 
 
 
@@ -162,14 +165,9 @@ df_comu <- data.frame(dlist,
                       )
 
 df_pvalue_comu <- data.frame(dlist,
-                             W.Qlist_AVG,
-                             W.Qlist_SD,
-                             N1.Qlist_AVG,
-                             N1.Qlist_SD,
-                             N2.Qlist_AVG,
-                             N2.Qlist_SD,
-                             N3.Qlist_AVG,
-                             N3.Qlist_SD
+                             pvalue_W_N1,
+                             pvalue_W_N2,
+                             pvalue_W_N3
 )
 
 ##Then rearrange your data frame
@@ -218,4 +216,147 @@ df_comu3[df_comu3$estado_sujeto == 'W.Qlist' | df_comu3$estado_sujeto == 'N3.Qli
   theme(legend.position="bottom")
 
 
+formattable(df_pvalue_comu, list(
+  pvalue_W_N1 = formatter("span", style = x ~ ifelse(x < 0.05, style(color = "red", font.weight = "bold"), NA)),
+  pvalue_W_N2 = formatter("span", style = x ~ ifelse(x < 0.05, style(color = "red", font.weight = "bold"), NA)),
+  pvalue_W_N3 = formatter("span", style = x ~ ifelse(x < 0.05, style(color = "red", font.weight = "bold"), NA))
+))
 
+
+###                 ---Coeficiente de Modularidad---                       ####
+
+
+N = dim(N1[[1]])[1]
+Nmaxlinks = N*(N-1)
+
+nlist = seq(100,2000,100)
+dlist = array(data=NA, dim=length(nlist))
+W.Qlist_AVG = array(data=NA, dim=length(nlist))
+W.Qlist_SD = array(data=NA, dim=length(nlist))
+N1.Qlist_AVG = array(data=NA, dim=length(nlist))
+N1.Qlist_SD = array(data=NA, dim=length(nlist))
+N2.Qlist_AVG = array(data=NA, dim=length(nlist))
+N2.Qlist_SD = array(data=NA, dim=length(nlist))
+N3.Qlist_AVG = array(data=NA, dim=length(nlist))
+N3.Qlist_SD = array(data=NA, dim=length(nlist))
+pvalue_W_N1 = array(data=NA, dim=length(nlist))
+pvalue_W_N2 = array(data=NA, dim=length(nlist))
+pvalue_W_N3 = array(data=NA, dim=length(nlist))
+
+
+k = 0
+for (n in nlist) {
+  k = k+1
+  dlist[k] = n/Nmaxlinks
+  W_temp <- c()
+  N1_temp <- c()
+  N2_temp <- c()
+  N3_temp <- c()
+  for(i in 1:18){
+    W_temp[i] = jk.modularity(as.matrix(W[[i]]),n,"Louvain")[1]
+    N1_temp[i] = jk.modularity(as.matrix(N1[[i]]),n,"Louvain")[1]
+    N2_temp[i] = jk.modularity(as.matrix(N2[[i]]),n,"Louvain")[1]
+    N3_temp[i] = jk.modularity(as.matrix(N3[[i]]),n,"Louvain")[1]
+  }
+  
+  W.Qlist_AVG[k] = mean(W_temp)
+  W.Qlist_SD[k] = sd(W_temp)
+  N1.Qlist_AVG[k] = mean(N1_temp)
+  N1.Qlist_SD[k] = sd(N1_temp)
+  N2.Qlist_AVG[k] = mean(N2_temp)
+  N2.Qlist_SD[k] = sd(N2_temp)
+  N3.Qlist_AVG[k] = mean(N3_temp)
+  N3.Qlist_SD[k] = sd(N3_temp)
+  pvalue_W_N1[k] = summary(
+    aov(media ~ key, 
+        data = gather(
+          data.frame(index=1:18,W_temp,N1_temp),
+          key, 
+          media,
+          -index)))[[1]][["Pr(>F)"]][1] 
+  pvalue_W_N2[k] = summary(
+    aov(media ~ key, 
+        data = gather(
+          data.frame(index=1:18,W_temp,N2_temp),
+          key, 
+          media,
+          -index)))[[1]][["Pr(>F)"]][1]
+  pvalue_W_N3[k] = summary(
+    aov(media ~ key, 
+        data = gather(
+          data.frame(index=1:18,W_temp,N3_temp),
+          key, 
+          media,
+          -index)))[[1]][["Pr(>F)"]][1]
+  
+}
+
+
+df_comu <- data.frame(dlist,
+                      W.Qlist_AVG,
+                      W.Qlist_SD,
+                      N1.Qlist_AVG,
+                      N1.Qlist_SD,
+                      N2.Qlist_AVG,
+                      N2.Qlist_SD,
+                      N3.Qlist_AVG,
+                      N3.Qlist_SD
+)
+
+df_pvalue_comu <- data.frame(dlist,
+                             pvalue_W_N1,
+                             pvalue_W_N2,
+                             pvalue_W_N3
+)
+
+##Then rearrange your data frame
+df_comu1 <- data.frame(dlist, W.Qlist_AVG, N1.Qlist_AVG, N2.Qlist_AVG, N3.Qlist_AVG)
+df_comu1 <- df_comu1 %>% gather(estado_sujeto, media, -dlist) 
+
+df_comu2 <- data.frame(dlist, W.Qlist_SD, N1.Qlist_SD, N2.Qlist_SD, N3.Qlist_SD)
+df_comu2 <- df_comu2 %>% gather(estado_sujeto, desvio, -dlist) 
+
+df_comu3 <- cbind(df_comu1,desvio = df_comu2$desvio)
+df_comu3$estado_sujeto <- substr(df_comu3$estado_sujeto,1,nchar(df_comu3$estado_sujeto)-4)
+
+
+
+
+df_comu3[df_comu3$estado_sujeto == 'W.Qlist' | df_comu3$estado_sujeto == 'N1.Qlist',] %>%
+  ggplot(., aes(x = dlist, y = media, group=estado_sujeto, color=estado_sujeto)) +
+  geom_line(size=1.2) +  # first layer
+  geom_point() +
+  geom_errorbar(aes(ymin=media-desvio, ymax=media+desvio)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(title="Louvain - Coeficiente de Modularidad - W vs N1",x="Densidad de Aristas(d)", y = "Coeficiente de Modularidad (Q)") +
+  theme_classic() +
+  theme(legend.position="bottom")
+
+
+df_comu3[df_comu3$estado_sujeto == 'W.Qlist' | df_comu3$estado_sujeto == 'N2.Qlist',] %>%
+  ggplot(., aes(x = dlist, y = media, group=estado_sujeto, color=estado_sujeto)) +
+  geom_line(size=1.2) +  # first layer
+  geom_point() +
+  geom_errorbar(aes(ymin=media-desvio, ymax=media+desvio)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(title="Louvain - Coeficiente de Modularidad - W vs N2",x="Densidad de Aristas(d)", y = "Coeficiente de Modularidad (Q)") +
+  theme_classic() +
+  theme(legend.position="bottom")
+
+
+df_comu3[df_comu3$estado_sujeto == 'W.Qlist' | df_comu3$estado_sujeto == 'N3.Qlist',] %>%
+  ggplot(., aes(x = dlist, y = media, group=estado_sujeto, color=estado_sujeto)) +
+  geom_line(size=1.2) +  # first layer
+  geom_point() +
+  geom_errorbar(aes(ymin=media-desvio, ymax=media+desvio)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(title="Louvain - Coeficiente de Modularidad - W vs N3",x="Densidad de Aristas(d)", y = "Coeficiente de Modularidad (Q)") +
+  theme_classic() +
+  theme(legend.position="bottom")
+
+
+formattable(df_pvalue_comu, list(
+  pvalue_W_N1 = formatter("span", style = x ~ ifelse(x < 0.05, style(color = "red", font.weight = "bold"), NA)),
+  pvalue_W_N2 = formatter("span", style = x ~ ifelse(x < 0.05, style(color = "red", font.weight = "bold"), NA)),
+  pvalue_W_N3 = formatter("span", style = x ~ ifelse(x < 0.05, style(color = "red", font.weight = "bold"), NA))
+))
