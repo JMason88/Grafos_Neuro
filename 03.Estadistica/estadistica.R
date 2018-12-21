@@ -97,6 +97,9 @@ N2.Qlist_AVG = array(data=NA, dim=length(nlist))
 N2.Qlist_SD = array(data=NA, dim=length(nlist))
 N3.Qlist_AVG = array(data=NA, dim=length(nlist))
 N3.Qlist_SD = array(data=NA, dim=length(nlist))
+pvalue_W_N1 = array(data=NA, dim=length(nlist))
+pvalue_W_N2 = array(data=NA, dim=length(nlist))
+pvalue_W_N3 = array(data=NA, dim=length(nlist))
 
 
 k = 0
@@ -122,6 +125,27 @@ for (n in nlist) {
   N2.Qlist_SD[k] = sd(N2_temp)
   N3.Qlist_AVG[k] = mean(N3_temp)
   N3.Qlist_SD[k] = sd(N3_temp)
+  pvalue_W_N1[k] = summary(
+                            aov(media ~ key, 
+                                data = gather(
+                                              data.frame(index=1:18,W_temp,N1_temp),
+                                              key, 
+                                              media,
+                                              -index)))[[1]][["Pr(>F)"]][1] 
+  pvalue_W_N2[k] = summary(
+    aov(media ~ key, 
+        data = gather(
+          data.frame(index=1:18,W_temp,N2_temp),
+          key, 
+          media,
+          -index)))[[1]][["Pr(>F)"]][1]
+  pvalue_W_N3[k] = summary(
+    aov(media ~ key, 
+        data = gather(
+          data.frame(index=1:18,W_temp,N3_temp),
+          key, 
+          media,
+          -index)))[[1]][["Pr(>F)"]][1]
   
 }
 
@@ -137,6 +161,16 @@ df_comu <- data.frame(dlist,
                       N3.Qlist_SD
                       )
 
+df_pvalue_comu <- data.frame(dlist,
+                             W.Qlist_AVG,
+                             W.Qlist_SD,
+                             N1.Qlist_AVG,
+                             N1.Qlist_SD,
+                             N2.Qlist_AVG,
+                             N2.Qlist_SD,
+                             N3.Qlist_AVG,
+                             N3.Qlist_SD
+)
 
 ##Then rearrange your data frame
 df_comu1 <- data.frame(dlist, W.Qlist_AVG, N1.Qlist_AVG, N2.Qlist_AVG, N3.Qlist_AVG)
