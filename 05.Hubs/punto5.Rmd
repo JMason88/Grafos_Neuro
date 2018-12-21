@@ -335,8 +335,32 @@ ggplot(transit, aes(estado,node)) +
 <div style="text-align: right">** La banda coloreada indica un cambio en el rol del nodo en la transicion entre estados de sueño, la banda blanca muestra que el rol se mantuvo en la transicion</div>
 
 
+```{r include=FALSE}
+transit2<-full_roles %>% mutate(T1_W_N1=ifelse(W==N1,0,1),
+                      T2_N1_N2=ifelse(N1==N2,0,1),
+                      T3_N2_N3=ifelse(N2==N3,0,1)) %>%
+  rowwise() %>% 
+  mutate(changes=sum(T1_W_N1,T2_N1_N2,T3_N2_N3)) %>% 
+  select(node, changes) %>% group_by(changes) %>% summarise(nodes=n())
+#transit2$changes<-as.character(transit2$changes)
+transit2
+```
 
-
+```{r fig.width=9, fig.height=6, echo=FALSE}
+ggplot(transit2, aes(changes, nodes, fill=changes)) +
+    geom_bar(stat="identity") +
+    labs(
+      x = "Total Cambios de Rol",
+      y = "Cantidad de nodos"
+    ) +
+    ggtitle(paste("Cambios de Rol x Nodo - Densidad =",interesting_value)) +
+    geom_text(aes(label=nodes), vjust=1.6, color="pink", size=3.5) +
+#    facet_wrap(~rol, scales="free", nrow=2, ncol = 2) +
+#    scale_fill_manual(values=c("red", "yellow", "blue")) +
+    scale_fill_gradient(name = "changes", 
+                        low = "blue", high = "red") +
+    theme_tufte() 
+```
 
 
 
