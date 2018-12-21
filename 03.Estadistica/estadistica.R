@@ -139,21 +139,49 @@ df_comu <- data.frame(dlist,
 
 
 ##Then rearrange your data frame
+df_comu1 <- data.frame(dlist, W.Qlist_AVG, N1.Qlist_AVG, N2.Qlist_AVG, N3.Qlist_AVG)
+df_comu1 <- df_comu1 %>% gather(estado_sujeto, media, -dlist) 
 
-dd_comu = melt(df_comu, id=c("dlist"))
+df_comu2 <- data.frame(dlist, W.Qlist_SD, N1.Qlist_SD, N2.Qlist_SD, N3.Qlist_SD)
+df_comu2 <- df_comu2 %>% gather(estado_sujeto, desvio, -dlist) 
 
-dd_comu %>%
-  filter(variable == c('W.Qlist_AVG','W.Qlist_SD','N1.Qlist_AVG','N1.Qlist_SD')) %>%
-  ggplot(., aes(x = dlist, y = value, group=variable, color=variable)) +
+df_comu3 <- cbind(df_comu1,desvio = df_comu2$desvio)
+df_comu3$estado_sujeto <- substr(df_comu3$estado_sujeto,1,nchar(df_comu3$estado_sujeto)-4)
+
+
+
+
+df_comu3[df_comu3$estado_sujeto == 'W.Qlist' | df_comu3$estado_sujeto == 'N1.Qlist',] %>%
+  ggplot(., aes(x = dlist, y = media, group=estado_sujeto, color=estado_sujeto)) +
     geom_line(size=1.2) +  # first layer
     geom_point() +
-    geom_errorbar(aes(ymin=len-sd, ymax=len+sd), width=.2,position=position_dodge(0.05)) +
+    geom_errorbar(aes(ymin=media-desvio, ymax=media+desvio)) +
     scale_color_brewer(palette = "Dark2") +
-    labs(title="Louvain - Cantidad de Comunidades",x="Densidad de Aristas(d)", y = "Cantidad de Comunidades (Nc)") +
+    labs(title="Louvain - Cantidad de Comunidades - W vs N1",x="Densidad de Aristas(d)", y = "Cantidad de Comunidades (Nc)") +
     theme_classic() +
     theme(legend.position="bottom")
 
 
+df_comu3[df_comu3$estado_sujeto == 'W.Qlist' | df_comu3$estado_sujeto == 'N2.Qlist',] %>%
+  ggplot(., aes(x = dlist, y = media, group=estado_sujeto, color=estado_sujeto)) +
+  geom_line(size=1.2) +  # first layer
+  geom_point() +
+  geom_errorbar(aes(ymin=media-desvio, ymax=media+desvio)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(title="Louvain - Cantidad de Comunidades - W vs N2",x="Densidad de Aristas(d)", y = "Cantidad de Comunidades (Nc)") +
+  theme_classic() +
+  theme(legend.position="bottom")
+
+
+df_comu3[df_comu3$estado_sujeto == 'W.Qlist' | df_comu3$estado_sujeto == 'N3.Qlist',] %>%
+  ggplot(., aes(x = dlist, y = media, group=estado_sujeto, color=estado_sujeto)) +
+  geom_line(size=1.2) +  # first layer
+  geom_point() +
+  geom_errorbar(aes(ymin=media-desvio, ymax=media+desvio)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(title="Louvain - Cantidad de Comunidades - W vs N3",x="Densidad de Aristas(d)", y = "Cantidad de Comunidades (Nc)") +
+  theme_classic() +
+  theme(legend.position="bottom")
 
 
 
