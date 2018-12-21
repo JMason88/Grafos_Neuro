@@ -1,6 +1,8 @@
 ---
-title: "Tarea 5: Rol de nodos, y cambios en el rol de los nodos"
-output: html_document
+title: 'Tarea 5: Rol de nodos, y cambios en el rol de los nodos'
+output:
+  word_document: default
+  html_document: default
 ---
 ```{r setup, include=FALSE}
 library(knitr)
@@ -14,12 +16,23 @@ library(dplyr)
 library(ggthemes)
 library(ggpubr)
 library(qgraph)
+library(tidyr)
 
 ```
 ```{r include=FALSE}
 rm(list = ls())
 gc()
 ```
+
+
+```{r include=FALSE}
+######################### Parametro interesante del punto 5 ################################
+# Controla el ejemplo puntual de la segunda parte del punto 
+interesting_value <- 1500 
+############################################################################################
+```
+
+
 
 ```{r echo=FALSE}
 parts<-read.csv("..\\aal_extended.csv",
@@ -29,7 +42,7 @@ parts$nbr<-NULL
 ```
 
 
-```{r echo=FALSE}
+```{r include=FALSE}
 source("..\\07.r_scripts\\node_roles.r")
 ```
 
@@ -64,12 +77,14 @@ W<-read_subj_data("..\\DataSujetos\\",parts$name,"W")
 
 
 ```{r echo=FALSE}
-roles_por_muestra<-function(suj,dens) {
+roles_por_muestra<-function(suj,dens, estado) {
   #  for (dens in seq(100,2000,100)) {
   aux<-calcular_membresia(suj,dens)
-  roles<-calcular_roles(aux$grph,aux$membr)
+  roles<-calcular_roles(aux$grph,aux$membr) %>% mutate(estado=estado)
   roles[is.na(roles$rol),"rol"]<-"None"
-  return(list(grph=aux$grph,membr=aux$membr,roles=roles))
+  return(list(grph=aux$grph,membr=aux$membr,roles=roles,
+              rol_summary=roles %>% group_by(rol) %>% 
+                summarise(nodes=n()) %>% mutate(estado=estado)))
 }
 ```
 
@@ -148,7 +163,6 @@ multiplot(p1,p2,p3, cols=3)
 <div style="text-align: right">** Los intervalos de cada punto fueron calculados usando desvio estandar</div>
 
 ```{r}
-interesting_value <- 2000 
 int_n1<-roles_promedio(N1,interesting_value) %>% mutate(estado="N1")
 int_n2<-roles_promedio(N2,interesting_value) %>% mutate(estado="N2")
 int_n3<-roles_promedio(N3,interesting_value) %>% mutate(estado="N3")
@@ -164,7 +178,8 @@ ggplot(full_roles, aes(estado, nodes, fill=estado)) +
       x = "Estados",
       y = "Node Count"
     ) +
-    ggtitle("Cantidad de Nodos por Estado") +
+    ggtitle(paste("Cantidad de Nodos Promedio por Estado - Densidad =",interesting_value)) +
+    geom_text(aes(label=nodes), vjust=1.6, color="pink", size=3.5) +
     facet_wrap(~rol, scales="free", nrow=2, ncol = 2) +
     scale_fill_manual(values=c("red", "yellow", "blue", "black")) +
     theme_tufte() 
@@ -180,11 +195,28 @@ W.avg <- data_reader("..\\DataSujetos\\",parts$name,"W")
 
 ```{r echo=FALSE}
 #interesting_value <- 2000 
-roles_n1.avg<-roles_por_muestra(N1.avg,interesting_value)
-roles_n2.avg<-roles_por_muestra(N2.avg,interesting_value)
-roles_n3.avg<-roles_por_muestra(N3.avg,interesting_value)
-roles_w.avg <-roles_por_muestra(W.avg,interesting_value)
+roles_n1.avg<-roles_por_muestra(N1.avg,interesting_value, "N1")
+roles_n2.avg<-roles_por_muestra(N2.avg,interesting_value, "N2")
+roles_n3.avg<-roles_por_muestra(N3.avg,interesting_value, "N3")
+roles_w.avg <-roles_por_muestra(W.avg,interesting_value, "W")
 ```
+
+```{r fig.width=9, fig.height=6, echo=FALSE}
+full_summary<-rbind(roles_n1.avg$rol_summary,roles_n2.avg$rol_summary,
+                    roles_n3.avg$rol_summary,roles_w.avg$rol_summary) %>% filter(rol != "None")
+ggplot(full_summary, aes(estado, nodes, fill=estado)) +
+    geom_bar(stat="identity") +
+    labs(
+      x = "Estados",
+      y = "Node Count"
+    ) +
+    ggtitle(paste("Cantidad de Nodos por Estado en muestra Promediada - Densidad =",interesting_value)) +
+    geom_text(aes(label=nodes), vjust=1.6, color="pink", size=3.5) +
+    facet_wrap(~rol, scales="free", nrow=2, ncol = 2) +
+    scale_fill_manual(values=c("red", "yellow", "blue", "black")) +
+    theme_tufte() 
+```
+
 
 ```{r echo=FALSE}
 custom_layout <- function(grp) {
@@ -197,12 +229,13 @@ custom_layout <- function(grp) {
 ```
 
 ```{r echo=FALSE}
-print_graph <- function(roles_n1.avg, title) {
+print_graph <- function(roles_n1.avg, title, pos) {
   roles_n1.avg$roles$shapes=shapes[roles_n1.avg$roles$rol]
 V(roles_n1.avg$grph)$color<-roles_n1.avg$membr
 roles_n1.avg$grph$palette<-rainbow(max(roles_n1.avg$membr))
 V(roles_n1.avg$grph)$shape<-roles_n1.avg$roles$shapes
 
+set.seed(1234)
 plot.igraph(roles_n1.avg$grph, main=title,
 #            vertex.color = "yellow",
 #           vertex.frame.color = "orange", 
@@ -210,10 +243,12 @@ plot.igraph(roles_n1.avg$grph, main=title,
 #            edge.width=E(roles_n1.avg$grph)$weight, 
             edge.arrow.size=0.05, edge.arrow.width=0.05, 
 #            vertex.label.font= 3,
-            vertex.label=NA,
+#            vertex.label=NA,
+            vertex.label=roles_n1.avg$membr,
             margin = -0.1,
-            layout=custom_layout(roles_n1.avg$grph), 
+#            layout=custom_layout(roles_n1.avg$grph), 
 #            layout=layout_with_kk(roles_n1.avg$grph), 
+            layout=pos, 
             vertex.size = 10, vertex.label.cex = 0.6)
 }
 ```
@@ -225,17 +260,102 @@ par(mfrow=c(1,2))
 strings=sort(unique(roles_n1.avg$roles$rol))
 shapes=c("circle","square", "none","pie", "sphere")
 names(shapes)=strings
+coords<-custom_layout(roles_n1.avg$grph)
 
-print_graph(roles_n1.avg,"RED N1")
-print_graph(roles_n2.avg,"RED N2")
+print_graph(roles_n1.avg,paste("RED N1 - Densidad =",interesting_value),coords)
+print_graph(roles_n2.avg,paste("RED N2 - Densidad =",interesting_value),coords)
 ```
 
 ```{r fig.width=9, fig.height=6, echo=FALSE}
 par(mfrow=c(1,2))
-print_graph(roles_n3.avg,"RED N3")
-print_graph(roles_w.avg,"RED W")
+print_graph(roles_n3.avg,paste("RED N3 - Densidad =",interesting_value),coords)
+print_graph(roles_w.avg,paste("RED W - Densidad =",interesting_value),coords)
 
 kable(data.frame(Nodo=names(shapes), Forma=shapes,row.names = NULL))
 ```
+
+##Identificacion de las variaciones de los roles en cambios de estado de sueño
+
+```{r fig.width=9, fig.height=6, include=FALSE}
+full_roles<-rbind(roles_n1.avg$roles,roles_n2.avg$roles,roles_n3.avg$roles,roles_w.avg$roles)
+full_roles$rol<-as.factor(full_roles$rol)
+full_roles$z<-NULL
+full_roles$p<-NULL
+full_roles <- full_roles %>% 
+  spread(estado,rol) %>% 
+  arrange(node)
+full_roles
+```
+
+```{r include=FALSE}
+transit<-full_roles %>% mutate(T1_W_N1=ifelse(W==N1,0,1),
+                      T2_N1_N2=ifelse(N1==N2,0,1),
+                      T3_N2_N3=ifelse(N2==N3,0,1),
+                      changes=sum(T1_W_N1,T2_N1_N2,T3_N2_N3)) %>% 
+  select(node,T1_W_N1,T2_N1_N2,T3_N2_N3) %>%
+  gather(key=estado, value=transition,-node) %>%
+  arrange(node) 
+transit.sum <- transit %>% group_by(estado) %>% summarise(transitions=sum(transition))
+transit
+transit.sum
+```
+
+```{r fig.width=9, fig.height=6, echo=FALSE}
+ggplot(transit.sum, aes(estado, transitions, fill=estado)) +
+    geom_bar(stat="identity") +
+    labs(
+      x = "Cambios de Estado",
+      y = "Cambios de Rol"
+    ) +
+    ggtitle(paste("Transiciones entre tipos de nodo en Cambio de estadod del sueño - Densidad =",interesting_value)) +
+    geom_text(aes(label=transitions), vjust=1.6, color="pink", size=3.5) +
+#    facet_wrap(~rol, scales="free", nrow=2, ncol = 2) +
+    scale_fill_manual(values=c("red", "yellow", "blue")) +
+    theme_tufte() 
+```
+
+
+
+
+```{r fig.width=9, fig.height=6, echo=FALSE}
+base_size <- 10
+ggplot(transit, aes(estado,node)) + 
+  geom_tile(aes(fill = transition),colour = "white") + 
+  scale_fill_gradient(low = "white",high = "steelblue") + 
+  theme_grey(base_size = base_size) + 
+  labs(x = "",y = "") + 
+  ggtitle(paste("Transicion de cada nodo entre roles durante el Cambio de estadod del sueño - Densidad =",interesting_value)) +
+  scale_x_discrete(expand = c(0, 0)) +
+  scale_y_discrete(expand = c(0, 0)) 
+#  opts(legend.position = "none",axis.ticks = theme_blank(), 
+#       axis.text.x = theme_text(size = base_size * 0.8, angle = 330, 
+#                                hjust = 0, colour = "grey50"))
+```
+
+<div style="text-align: right">** La banda coloreada indica un cambio en el rol del nodo en la transicion entre estados de sueño, la banda blanca muestra que el rol se mantuvo en la transicion</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

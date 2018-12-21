@@ -24,7 +24,7 @@ include.packages("igraph")
 include.packages("readr")
 
 calcular_roles <- function (g, memb) {
-  roles<-data.frame(z=within_module_deg_z_score(g,memb),
+  roles<-data.frame(node=V(g)$name,z=within_module_deg_z_score(g,memb),
                     p=part_coeff(g,memb))
   rownames(roles)<-NULL
   roles <- roles %>% mutate(rol=ifelse(p>pc & z>zc,"Global Hubs",
