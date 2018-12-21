@@ -16,6 +16,7 @@ library(dplyr)
 library(ggthemes)
 library(ggpubr)
 library(qgraph)
+library(tidyr)
 
 ```
 ```{r include=FALSE}
@@ -272,5 +273,89 @@ print_graph(roles_w.avg,paste("RED W - Densidad =",interesting_value),coords)
 
 kable(data.frame(Nodo=names(shapes), Forma=shapes,row.names = NULL))
 ```
+
+##Identificacion de las variaciones de los roles en cambios de estado de sueño
+
+```{r fig.width=9, fig.height=6, include=FALSE}
+full_roles<-rbind(roles_n1.avg$roles,roles_n2.avg$roles,roles_n3.avg$roles,roles_w.avg$roles)
+full_roles$rol<-as.factor(full_roles$rol)
+full_roles$z<-NULL
+full_roles$p<-NULL
+full_roles <- full_roles %>% 
+  spread(estado,rol) %>% 
+  arrange(node)
+full_roles
+```
+
+```{r include=FALSE}
+transit<-full_roles %>% mutate(T1_W_N1=ifelse(W==N1,0,1),
+                      T2_N1_N2=ifelse(N1==N2,0,1),
+                      T3_N2_N3=ifelse(N2==N3,0,1),
+                      changes=sum(T1_W_N1,T2_N1_N2,T3_N2_N3)) %>% 
+  select(node,T1_W_N1,T2_N1_N2,T3_N2_N3) %>%
+  gather(key=estado, value=transition,-node) %>%
+  arrange(node) 
+transit.sum <- transit %>% group_by(estado) %>% summarise(transitions=sum(transition))
+transit
+transit.sum
+```
+
+```{r fig.width=9, fig.height=6, echo=FALSE}
+ggplot(transit.sum, aes(estado, transitions, fill=estado)) +
+    geom_bar(stat="identity") +
+    labs(
+      x = "Cambios de Estado",
+      y = "Cambios de Rol"
+    ) +
+    ggtitle(paste("Transiciones entre tipos de nodo en Cambio de estadod del sueño - Densidad =",interesting_value)) +
+    geom_text(aes(label=transitions), vjust=1.6, color="pink", size=3.5) +
+#    facet_wrap(~rol, scales="free", nrow=2, ncol = 2) +
+    scale_fill_manual(values=c("red", "yellow", "blue")) +
+    theme_tufte() 
+```
+
+
+
+
+```{r fig.width=9, fig.height=6, echo=FALSE}
+base_size <- 10
+ggplot(transit, aes(estado,node)) + 
+  geom_tile(aes(fill = transition),colour = "white") + 
+  scale_fill_gradient(low = "white",high = "steelblue") + 
+  theme_grey(base_size = base_size) + 
+  labs(x = "",y = "") + 
+  ggtitle(paste("Transicion de cada nodo entre roles durante el Cambio de estadod del sueño - Densidad =",interesting_value)) +
+  scale_x_discrete(expand = c(0, 0)) +
+  scale_y_discrete(expand = c(0, 0)) 
+#  opts(legend.position = "none",axis.ticks = theme_blank(), 
+#       axis.text.x = theme_text(size = base_size * 0.8, angle = 330, 
+#                                hjust = 0, colour = "grey50"))
+```
+
+<div style="text-align: right">** La banda coloreada indica un cambio en el rol del nodo en la transicion entre estados de sueño, la banda blanca muestra que el rol se mantuvo en la transicion</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
